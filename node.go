@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"net/rpc"
 	"sync"
+	"time"
 )
 
 type Node struct {
@@ -57,4 +59,33 @@ func (n *Node) sendPingToNode(addr string) error {
 		return err
 	}
 	return nil
+}
+
+func (n *Node) startElection() {
+	fmt.Println("starting election")
+}
+
+func (n *Node) run() {
+	go n.listenAndServeRPC()
+	go n.connectToCluster()
+	for {
+		time.Sleep(1 * time.Second)
+		if n.isLeader {
+			fmt.Println("I am the leader:", n.addr)
+			continue
+		}
+		if n.leaderAddr == "" {
+			n.startElection()
+		} else {
+			err := n.sendPingToNode(n.leaderAddr)
+			if err != nil {
+				fmt.Println("Leader", n.leaderAddr, "is down. Starting election...")
+				n.leaderAddr = ""
+				n.startElection()
+			} else {
+				fmt.Println("Leader", n.leaderAddr, "is alive.")
+			}
+		}
+
+	}
 }
