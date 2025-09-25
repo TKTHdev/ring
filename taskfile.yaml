@@ -1,0 +1,17 @@
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task: build
+      - task: run
+        vars:
+          INDEX: '{{.CLI_ARGS}}'
+
+  build:
+    cmds:
+      - go build -o ring .
+
+  run:
+    cmds:
+      - ./ring {{.INDEX}}

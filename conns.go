@@ -28,3 +28,27 @@ func (n *Node) listenAndServeRPC() {
 		go rpc.ServeConn(conn)
 	}
 }
+
+func (n *Node) connectToCluster() {
+	for {
+		for _, addr := range n.nodeList {
+			if addr != n.addr {
+				n.connectToNode(addr)
+			}
+		}
+	}
+}
+
+func (n *Node) connectToNode(addr string) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if _, exists := n.rpcClients[addr]; !exists {
+		client, err := rpc.Dial("tcp", addr)
+		if err != nil {
+			//fmt.Println("Error connecting to node", addr, ":", err)
+			return
+		}
+		n.rpcClients[addr] = client
+		fmt.Println("Connected to node", addr)
+	}
+}
