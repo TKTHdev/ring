@@ -48,3 +48,13 @@ func (n *Node) sendCoordinatorToNode(addr, coordAddr string) error {
 	}
 	return nil
 }
+
+func (n *Node) sendPingToNode(addr string) error {
+	args := &PingArgs{}
+	reply := &PingReply{}
+	err := n.sendRPC(addr, PingRPC, args, reply)
+	if err != nil {
+		return err
+	}
+	return nil
+}
