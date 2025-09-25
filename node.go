@@ -28,3 +28,23 @@ func NewNode() *Node {
 	n.readNodeIndexAndSet()
 	return n
 }
+
+func (n *Node) sendElectionToNode(addr string, aliveNodes []string) error {
+	args := &ElectionArgs{AliveNodes: aliveNodes}
+	reply := &ElectionReply{}
+	err := n.sendRPC(addr, ElectionRPC, args, reply)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (n *Node) sendCoordinatorToNode(addr, coordAddr string) error {
+	args := &CoordinatorArgs{CoordinatorAddr: coordAddr}
+	reply := &CoordinatorReply{}
+	err := n.sendRPC(addr, CoordinatorRPC, args, reply)
+	if err != nil {
+		return err
+	}
+	return nil
+}
