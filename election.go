@@ -6,6 +6,22 @@ import (
 	"time"
 )
 
+func (n *Node) startElection() {
+	n.electionCh = make(chan ElectionArgs)
+	go n.sendElectionToNextAliveNodeOrigin([]string{n.addr})
+	select {
+	case args := <-n.electionCh:
+		fmt.Println("Election completed. Alive nodes:", args.AliveNodes)
+		maxNode := slices.Max(args.AliveNodes)
+		n.coordinatorAddr = maxNode
+		n.isCoordinator = n.coordinatorAddr == n.addr
+		return
+
+	case <-time.After(2 * time.Second):
+		n.startElection()
+	}
+}
+
 func (n *Node) sendElectionToNextAliveNode(aliveNodes []string, originAddr string) {
 	nxtNodeIdx := (n.selfIdx + 1) % len(n.nodeList)
 	for {
@@ -39,21 +55,5 @@ func (n *Node) sendElectionToNextAliveNodeOrigin(aliveNodes []string) {
 		}
 		fmt.Println("Election message sent to", nxtNodeAddr)
 		break
-	}
-}
-
-func (n *Node) startElection() {
-	n.electionCh = make(chan ElectionArgs)
-	go n.sendElectionToNextAliveNodeOrigin([]string{n.addr})
-	select {
-	case args := <-n.electionCh:
-		fmt.Println("Election completed. Alive nodes:", args.AliveNodes)
-		maxNode := slices.Max(args.AliveNodes)
-		n.leaderAddr = maxNode
-		n.isLeader = n.leaderAddr == n.addr
-		return
-
-	case <-time.After(2 * time.Second):
-		n.startElection()
 	}
 }

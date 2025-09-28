@@ -8,22 +8,22 @@ import (
 )
 
 type Node struct {
-	addr          string
-	selfIdx       int
-	nodeList      []string
-	isLeader      bool
-	leaderAddr    string
-	rpcClients    map[string]*rpc.Client
-	mu            sync.Mutex
-	electionCh    chan ElectionArgs
-	coordinatorCh chan CoordinatorArgs
+	addr            string
+	selfIdx         int
+	nodeList        []string
+	isCoordinator   bool
+	coordinatorAddr string
+	rpcClients      map[string]*rpc.Client
+	mu              sync.Mutex
+	electionCh      chan ElectionArgs
+	coordinatorCh   chan CoordinatorArgs
 }
 
 func NewNode() *Node {
 	n := &Node{
-		isLeader:   false,
-		leaderAddr: "",
-		mu:         sync.Mutex{},
+		isCoordinator:   false,
+		coordinatorAddr: "",
+		mu:              sync.Mutex{},
 		//those will be set later
 		addr:       "",
 		nodeList:   []string{},
@@ -34,8 +34,8 @@ func NewNode() *Node {
 	return n
 }
 
-func (n *Node) sendElectionToNode(addr string, aliveNodes []string, originaddr string) error {
-	args := &ElectionArgs{AliveNodes: aliveNodes, OriginAddr: originaddr}
+func (n *Node) sendElectionToNode(addr string, aliveNodes []string, originAddr string) error {
+	args := &ElectionArgs{AliveNodes: aliveNodes, OriginAddr: originAddr}
 	reply := &ElectionReply{}
 	err := n.sendRPC(addr, ElectionRPC, args, reply)
 	if err != nil {
@@ -70,20 +70,21 @@ func (n *Node) run() {
 
 	for {
 		time.Sleep(500 * time.Millisecond)
-		if n.isLeader {
+		if n.isCoordinator {
 			fmt.Println("I am the leader:", n.addr)
 			continue
 		}
-		if n.leaderAddr == "" {
+		if n.coordinatorAddr == "" {
 			n.startElection()
 		} else {
-			err := n.sendPingToNode(n.leaderAddr)
+			err := n.sendPingToNode(n.coordinatorAddr)
 			if err != nil {
-				fmt.Println("Leader", n.leaderAddr, "is down. Starting election...")
-				n.leaderAddr = ""
+				fmt.Println("Leader", n.coordinatorAddr, "is down. Starting election...")
+				n.coordinatorAddr = ""
 				n.startElection()
+				n.announceCoordinator(n.coordinatorAddr)
 			} else {
-				fmt.Println("Leader", n.leaderAddr, "is alive.")
+				fmt.Println("Leader", n.coordinatorAddr, "is alive.")
 			}
 		}
 
