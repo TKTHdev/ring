@@ -6,6 +6,16 @@ import (
 	"time"
 )
 
+func (n *Node) sendElectionToNode(addr string, aliveNodes []string, originAddr string) error {
+	args := &ElectionArgs{AliveNodes: aliveNodes, OriginAddr: originAddr}
+	reply := &ElectionReply{}
+	err := n.sendRPC(addr, ElectionRPC, args, reply)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (n *Node) startElection() {
 	n.electionCh = make(chan ElectionArgs)
 	go n.sendElectionToNextAliveNodeOrigin([]string{n.addr})
@@ -25,8 +35,8 @@ func (n *Node) startElection() {
 func (n *Node) sendElectionToNextAliveNode(aliveNodes []string, originAddr string) {
 	nxtNodeIdx := (n.selfIdx + 1) % len(n.nodeList)
 	for {
-		if nxtNodeIdx == n.selfIdx {
-			break
+		if n.nodeList[nxtNodeIdx] == n.nodeList[n.selfIdx] {
+			return
 		}
 		nxtNodeAddr := n.nodeList[nxtNodeIdx]
 		err := n.sendElectionToNode(nxtNodeAddr, aliveNodes, originAddr)
@@ -36,15 +46,16 @@ func (n *Node) sendElectionToNextAliveNode(aliveNodes []string, originAddr strin
 			continue
 		}
 		fmt.Println("Election message sent to", nxtNodeAddr)
-		break
+		return
 	}
 }
 
 func (n *Node) sendElectionToNextAliveNodeOrigin(aliveNodes []string) {
 	nxtNodeIdx := (n.selfIdx + 1) % len(n.nodeList)
 	for {
-		if nxtNodeIdx == n.selfIdx {
+		if n.nodeList[nxtNodeIdx] == n.nodeList[n.selfIdx] {
 			n.electionCh <- ElectionArgs{AliveNodes: aliveNodes, OriginAddr: n.addr}
+			return
 		}
 		nxtNodeAddr := n.nodeList[nxtNodeIdx]
 		err := n.sendElectionToNode(nxtNodeAddr, aliveNodes, n.addr)

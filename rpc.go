@@ -20,7 +20,15 @@ func (n *Node) Election(args *ElectionArgs, reply *struct{}) error {
 	return nil
 }
 
-func (n *Node) Coordinator(args *struct{}, reply *struct{}) error {
+func (n *Node) Coordinator(args *CoordinatorArgs, reply *struct{}) error {
+	fmt.Println("Received coordinator message from", args.OriginAddr, "with coordinator", args.CoordinatorAddr)
+	if args.OriginAddr == n.addr {
+		n.coordinatorCh <- *args
+		return nil
+	}
+	n.coordinatorAddr = args.CoordinatorAddr
+	n.isCoordinator = n.coordinatorAddr == n.addr
+	n.sendCoordinatorToNextAliveNode(args.CoordinatorAddr, args.OriginAddr)
 	return nil
 }
 
