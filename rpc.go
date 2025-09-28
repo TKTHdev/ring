@@ -9,7 +9,6 @@ const (
 )
 
 func (n *Node) Election(args *ElectionArgs, reply *struct{}) error {
-	fmt.Println("Received election message from", args.OriginAddr)
 	if args.OriginAddr == n.addr {
 		n.electionCh <- *args
 		return nil
@@ -21,7 +20,6 @@ func (n *Node) Election(args *ElectionArgs, reply *struct{}) error {
 }
 
 func (n *Node) Coordinator(args *CoordinatorArgs, reply *struct{}) error {
-	fmt.Println("Received coordinator message from", args.OriginAddr, "with coordinator", args.CoordinatorAddr)
 	if args.OriginAddr == n.addr {
 		n.coordinatorCh <- *args
 		return nil

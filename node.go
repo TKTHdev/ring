@@ -49,7 +49,7 @@ func (n *Node) run() {
 	go n.connectToCluster()
 
 	for {
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 		if n.isCoordinator {
 			fmt.Println("I am the leader:", n.addr)
 			continue
@@ -60,13 +60,13 @@ func (n *Node) run() {
 		} else {
 			err := n.sendPingToNode(n.coordinatorAddr)
 			if err != nil {
-				fmt.Println("Leader", n.coordinatorAddr, "is down. Starting election...")
+				fmt.Println("Coordinator", n.coordinatorAddr, "is down. Starting election...")
 				n.coordinatorAddr = ""
 				n.startElection()
-				fmt.Println("New leader elected:", n.coordinatorAddr)
+				fmt.Println("New coordinator elected:", n.coordinatorAddr)
 				n.announceCoordinator(n.coordinatorAddr)
 			} else {
-				fmt.Println("Leader", n.coordinatorAddr, "is alive.")
+				fmt.Println("Coordinator", n.coordinatorAddr, "is alive.")
 			}
 		}
 
