@@ -8,7 +8,15 @@ const (
 	PingRPC        = "Node.Ping"
 )
 
-func (n *Node) Election(args *struct{}, reply *struct{}) error {
+func (n *Node) Election(args *ElectionArgs, reply *struct{}) error {
+	fmt.Println("Received election message from", args.OriginAddr)
+	if args.OriginAddr == n.addr {
+		n.electionCh <- *args
+		return nil
+	}
+	args.AliveNodes = append(args.AliveNodes, n.addr)
+	n.sendElectionToNextAliveNode(args.AliveNodes, args.OriginAddr)
+
 	return nil
 }
 

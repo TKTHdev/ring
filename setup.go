@@ -35,4 +35,5 @@ func (n *Node) readNodeIndexAndSet() {
 		return
 	}
 	n.addr = n.nodeList[index]
+	n.selfIdx = index
 }
